@@ -5,6 +5,10 @@ output:
   keep_md: true
 ---
 
+## Abstract
+
+*This is an exploratory analysis of data gathered from a personal activity device used by a single subject.  The data gathered consist of the number of steps taken in each five-minute inverval over the course of two months; an observation consists of a number of steps during an interval on a date.  We will attempt to answer several simple questions about the subject's daily activity, including average number of steps taken per day, average steps taken in each interval across all days, and differences in activity between weekdays and weekend days.*
+
 ## Loading and preprocessing the data
 
 The dataset is provided as a three-column, 17,568-row CSV file with this simple data dictionary:
@@ -18,6 +22,8 @@ The dataset is provided as a three-column, 17,568-row CSV file with this simple 
 The dataset is read in as follows (after being extracted from its ZIP archive if nececessary).  Other than defining column classes, no further preprocessing or cleaning is performed at this point.  
 
 ```{r}
+opts_chunk$set(echo=TRUE)
+
 if (!file.exists("activity.csv")) {
     unzip("activity.zip")
 }
@@ -57,13 +63,13 @@ print(meansteps)
 print(mediansteps)
 ```
 
-The mean total number of steps taken per day is $`r format(round(meansteps,1), scientific=F, digits=8)`$ while the median is $`r mediansteps`$.  The mean and median are essentially the same; a slight "jitter" had been added to the median in the plot in order to show it next to the mean; otherwise, the line drawn last would be the only one visible.
+The mean total number of steps taken per day is **`r format(round(meansteps,1), scientific=F, digits=8)`** while the median is **`r mediansteps`**.  The mean and median are essentially the same; a slight "jitter" had been added to the median in the plot in order to show it next to the mean; otherwise, the line drawn last would be the only one visible.
 
 
 ## What is the average daily activity pattern?
 Next, we analyzed the average number of steps taken in each of the 288 intervals in a day, averaged across all days.  
 
-$\frac{(24 \text{ hrs/day}) * 60 \text{ min}}{5 \text{ min/interval}} = 288 \text{ intervals/day}$
+$\frac{(24 \text{ hrs/day}) \times (60 \text{ min})}{5 \text{ min/interval}} = 288 \text{ intervals/day}$
 
 ```{r}
 # still using dplyr
@@ -72,7 +78,7 @@ interval.avgs <- activity.clean %>%
                  summarise(avgsteps = mean(steps))
 
 with(interval.avgs, plot(interval, avgsteps, type="l", 
-                         main="Average Steps by Daily Time Interval", 
+                         main="Average Steps by Interval", 
                          xlab="Time Interval (hhmm)", ylab="Average Number of Steps"))
 
 # condense the interval series to one row with the maximum observed value:
@@ -80,7 +86,7 @@ maxint <- filter(interval.avgs, avgsteps==max(avgsteps))
 print(maxint)
 ```
 
-The interval with the maximum average number of steps occurs at $`r maxint$interval`$ with a value of $`r round(maxint$avgsteps,2)`$ steps.  This result agrees with the prominent morning peak in the plot above (which, we can speculate, reflects the subject's daily routine, perhaps his/her commute to work or morning fitness activity).
+The interval with the maximum average number of steps occurs at **`r maxint$interval`** with a value of **`r round(maxint$avgsteps,2)`** steps.  This result agrees with the prominent morning peak in the plot above (which, we can speculate, reflects the subject's daily routine, perhaps his/her commute to work or morning fitness activity).
 
 ## Imputing missing values
 
@@ -92,7 +98,7 @@ print(missing)
 
 ```
 
-There are $`r missing`$ missing observations in the $`r nrow(activity)`$ rows.  Obviously, the precise effect of missing values (wrt what would have ideally been observed in a complete set of observations) is unknowable, but we will explore the question by substituting ("plugging") estimated values for the missing observations and re-analyzing the resulting dataset.  We will replace each missing value with average for that interval across all days (as calculated above).
+There are **`r missing`** missing observations in the **`r nrow(activity)`** rows.  Obviously, the precise effect of missing values (wrt what would have ideally been observed in a complete set of observations) is unknowable, but we will explore the question by substituting ("plugging") estimated values for the missing observations and re-analyzing the resulting dataset.  We will replace each missing value with average for that interval across all days (as calculated above).
 
 ```{r}
 activity.na <- filter(activity, is.na(steps))
@@ -108,7 +114,7 @@ str(activity.fix)
 sum(complete.cases(activity.fix))
 ```
 
-In this way, we have assembled a complete series of $`r nrow(activity.fix)`$ observations from the $`r nrow(activity.clean)`$ complete observations and the $`r nrow(activity.plug)`$ averages substituted for missing values.
+In this way, we have assembled a complete series of **`r nrow(activity.fix)`** observations from the **`r nrow(activity.clean)`** complete observations and the **`r nrow(activity.plug)`** averages substituted for missing values.
 
 Here, we re-create the first analysis from above, now applied to the complete series with missing data filled-in using invterval averages:
 
@@ -118,7 +124,7 @@ daysum2 <- activity.fix %>%
            summarise(steps=sum(steps))
 
 hist(daysum2$steps, breaks=10, col="blue", main="Daily Step Totals Frequency of Occurrence", 
-     xlab="Total Daily Steps")
+     xlab="Total Daily Steps", sub="(missing intervals imputed from averages)")
 
 meansteps2 <- mean(daysum2$steps)
 mediansteps2 <- median(daysum2$steps)
@@ -129,7 +135,7 @@ print(meansteps2)
 print(mediansteps2)
 ```
 
-For the dataset with filled-in values, the mean number of daily steps is $`r format(round(meansteps2,1), scientific=F, digits=8)`$ and the median is $`r format(round(mediansteps2,0), scientific=F, digits=8)`$, both of which are practically identical to  the corresponding values computed on the dataset of complete observations (see above).  This is not a surprising result: by adding means of the component intervals as missing values, we do not change the means of their sums. 
+For the dataset with filled-in values, the mean number of daily steps is **`r format(round(meansteps2,1), scientific=F, digits=8)`** and the median is **`r format(round(mediansteps2,0), scientific=F, digits=8)`**, both of which are practically identical to  the corresponding values computed on the dataset of complete observations (see above).  This is not a surprising result: by adding means of the component intervals as missing values, we do not change the means of their sums. 
 
 As an aside, it is interesting to note that the missing data occurs in a pattern of entire days, not intervals within a day for which observations were recorded:
 
@@ -145,7 +151,8 @@ days.found <- activity.clean %>%
               distinct
 # days with some missing, some present data would be here
 days.mixed <- intersect(days.missing$date, days.found$date)
-print(length(days.mixed))
+ct.mixed <- length(days.mixed)
+print(ct.mixed)
 
 ```
 
@@ -158,7 +165,7 @@ print(interval.avgs.sum)
 
 ```
 
-The sum of the average intervals is $`r format(round(interval.avgs.sum,1), scientific=F, digits=8)`$, which is (unsurprisingly) the same as the average of the intervals summed by day.  The conclusion is that this approach to filling in missing data does nothing to change the overall analysis, since the estimate of the total daily number of steps is the same; it will, however, tend to reduce the effect analyzed in the next part, weekday vs. weekend activity levels, since plugging average values is insensitive to weekday vs. weekend.  A more sophisticated fill-in approach might take this difference into account use weekend or weekday averages of known values depending on the day being filled in.
+The sum of the average intervals is **`r format(round(interval.avgs.sum,1), scientific=F, digits=8)`**, which is (unsurprisingly) the same as the average of the intervals summed by day.  The conclusion is that this approach to filling in missing data does nothing to change the overall analysis, since the estimate of the total daily number of steps is the same; it will, however, tend to reduce the effect analyzed in the next part, weekday vs. weekend activity levels, since plugging average values is insensitive to weekday vs. weekend.  A more sophisticated fill-in approach might take this difference into account use weekend or weekday averages of known values depending on the day being filled in.
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
@@ -203,4 +210,4 @@ weekend.avg <- weekpart.summary %>% filter(weekpart=="weekend") %>% select(avgst
 
 ```
 
-On weekdays, the subject took an average of $`r format(round(weekday.avg,1), scientific=F, digits=8)`$ steps, while his/her weekend average was $`r format(round(weekend.avg,1), scientific=F, digits=8)`$ or $`r round(100*(weekend.avg/weekday.avg -1),1)`\%$ more.
+On weekdays, the subject took an average of **`r format(round(weekday.avg,1), scientific=F, digits=8)`** steps, while his/her weekend average was **`r format(round(weekend.avg,1), scientific=F, digits=8)`** or **`r round(100*(weekend.avg/weekday.avg -1),1)`%** more.

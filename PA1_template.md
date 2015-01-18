@@ -5,6 +5,10 @@ output:
   keep_md: true
 ---
 
+## Abstract
+
+*This is an exploratory analysis of data gathered from a personal activity device used by a single subject.  The data gathered consist of the number of steps taken in each five-minute inverval over the course of two months; an observation consists of a number of steps during an interval on a date.  We will attempt to answer several simple questions about the subject's daily activity, including average number of steps taken per day, average steps taken in each interval across all days, and differences in activity between weekdays and weekend days.*
+
 ## Loading and preprocessing the data
 
 The dataset is provided as a three-column, 17,568-row CSV file with this simple data dictionary:
@@ -19,6 +23,8 @@ The dataset is read in as follows (after being extracted from its ZIP archive if
 
 
 ```r
+opts_chunk$set(echo=TRUE)
+
 if (!file.exists("activity.csv")) {
     unzip("activity.zip")
 }
@@ -90,13 +96,13 @@ print(mediansteps)
 ## [1] 10765
 ```
 
-The mean total number of steps taken per day is $10766.2$ while the median is $10765$.  The mean and median are essentially the same; a slight "jitter" had been added to the median in the plot in order to show it next to the mean; otherwise, the line drawn last would be the only one visible.
+The mean total number of steps taken per day is **10766.2** while the median is **10765**.  The mean and median are essentially the same; a slight "jitter" had been added to the median in the plot in order to show it next to the mean; otherwise, the line drawn last would be the only one visible.
 
 
 ## What is the average daily activity pattern?
 Next, we analyzed the average number of steps taken in each of the 288 intervals in a day, averaged across all days.  
 
-$\frac{(24 \text{ hrs/day}) * 60 \text{ min}}{5 \text{ min/interval}} = 288 \text{ intervals/day}$
+$\frac{(24 \text{ hrs/day}) \times (60 \text{ min})}{5 \text{ min/interval}} = 288 \text{ intervals/day}$
 
 
 ```r
@@ -106,7 +112,7 @@ interval.avgs <- activity.clean %>%
                  summarise(avgsteps = mean(steps))
 
 with(interval.avgs, plot(interval, avgsteps, type="l", 
-                         main="Average Steps by Daily Time Interval", 
+                         main="Average Steps by Interval", 
                          xlab="Time Interval (hhmm)", ylab="Average Number of Steps"))
 ```
 
@@ -125,7 +131,7 @@ print(maxint)
 ## 1      835    206.2
 ```
 
-The interval with the maximum average number of steps occurs at $835$ with a value of $206.17$ steps.  This result agrees with the prominent morning peak in the plot above (which, we can speculate, reflects the subject's daily routine, perhaps his/her commute to work or morning fitness activity).
+The interval with the maximum average number of steps occurs at **835** with a value of **206.17** steps.  This result agrees with the prominent morning peak in the plot above (which, we can speculate, reflects the subject's daily routine, perhaps his/her commute to work or morning fitness activity).
 
 ## Imputing missing values
 
@@ -141,7 +147,7 @@ print(missing)
 ## [1] 2304
 ```
 
-There are $2304$ missing observations in the $17568$ rows.  Obviously, the precise effect of missing values (wrt what would have ideally been observed in a complete set of observations) is unknowable, but we will explore the question by substituting ("plugging") estimated values for the missing observations and re-analyzing the resulting dataset.  We will replace each missing value with average for that interval across all days (as calculated above).
+There are **2304** missing observations in the **17568** rows.  Obviously, the precise effect of missing values (wrt what would have ideally been observed in a complete set of observations) is unknowable, but we will explore the question by substituting ("plugging") estimated values for the missing observations and re-analyzing the resulting dataset.  We will replace each missing value with average for that interval across all days (as calculated above).
 
 
 ```r
@@ -178,7 +184,7 @@ sum(complete.cases(activity.fix))
 ## [1] 17568
 ```
 
-In this way, we have assembled a complete series of $17568$ observations from the $15264$ complete observations and the $2304$ averages substituted for missing values.
+In this way, we have assembled a complete series of **17568** observations from the **15264** complete observations and the **2304** averages substituted for missing values.
 
 Here, we re-create the first analysis from above, now applied to the complete series with missing data filled-in using invterval averages:
 
@@ -189,7 +195,7 @@ daysum2 <- activity.fix %>%
            summarise(steps=sum(steps))
 
 hist(daysum2$steps, breaks=10, col="blue", main="Daily Step Totals Frequency of Occurrence", 
-     xlab="Total Daily Steps")
+     xlab="Total Daily Steps", sub="(missing intervals imputed from averages)")
 
 meansteps2 <- mean(daysum2$steps)
 mediansteps2 <- median(daysum2$steps)
@@ -216,7 +222,7 @@ print(mediansteps2)
 ## [1] 10766
 ```
 
-For the dataset with filled-in values, the mean number of daily steps is $10766.2$ and the median is $10766$, both of which are practically identical to  the corresponding values computed on the dataset of complete observations (see above).  This is not a surprising result: by adding means of the component intervals as missing values, we do not change the means of their sums. 
+For the dataset with filled-in values, the mean number of daily steps is **10766.2** and the median is **10766**, both of which are practically identical to  the corresponding values computed on the dataset of complete observations (see above).  This is not a surprising result: by adding means of the component intervals as missing values, we do not change the means of their sums. 
 
 As an aside, it is interesting to note that the missing data occurs in a pattern of entire days, not intervals within a day for which observations were recorded:
 
@@ -232,7 +238,8 @@ days.found <- activity.clean %>%
               distinct
 # days with some missing, some present data would be here
 days.mixed <- intersect(days.missing$date, days.found$date)
-print(length(days.mixed))
+ct.mixed <- length(days.mixed)
+print(ct.mixed)
 
 ```
 
@@ -248,7 +255,7 @@ print(interval.avgs.sum)
 ## [1] 10766
 ```
 
-The sum of the average intervals is $10766.2$, which is (unsurprisingly) the same as the average of the intervals summed by day.  The conclusion is that this approach to filling in missing data does nothing to change the overall analysis, since the estimate of the total daily number of steps is the same; it will, however, tend to reduce the effect analyzed in the next part, weekday vs. weekend activity levels, since plugging average values is insensitive to weekday vs. weekend.  A more sophisticated fill-in approach might take this difference into account use weekend or weekday averages of known values depending on the day being filled in.
+The sum of the average intervals is **10766.2**, which is (unsurprisingly) the same as the average of the intervals summed by day.  The conclusion is that this approach to filling in missing data does nothing to change the overall analysis, since the estimate of the total daily number of steps is the same; it will, however, tend to reduce the effect analyzed in the next part, weekday vs. weekend activity levels, since plugging average values is insensitive to weekday vs. weekend.  A more sophisticated fill-in approach might take this difference into account use weekend or weekday averages of known values depending on the day being filled in.
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
@@ -307,4 +314,4 @@ weekday.avg <- weekpart.summary %>% filter(weekpart=="weekday") %>% select(avgst
 weekend.avg <- weekpart.summary %>% filter(weekpart=="weekend") %>% select(avgsteps) %>% unlist
 ```
 
-On weekdays, the subject took an average of $10255.8$ steps, while his/her weekend average was $12201.5$ or $19\%$ more.
+On weekdays, the subject took an average of **10255.8** steps, while his/her weekend average was **12201.5** or **19%** more.
